@@ -1,0 +1,407 @@
+public UserDetailsService userDetailsService() {
+        InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
+
+        /* o metodo withDefaultPasswordEncoder() está deprecado, mas pode ser utilizado a título de tutorial.
+         * tratando-se de fase de produção, outro mecanismo deve ser adotado. cenas dos próximos capítulos.*/
+        manager.createUser(User.withDefaultPasswordEncoder().username("user").password("password").roles("USER").build());
+
+        return manager;
+    }
+
+
+/*
+CASSANDRA AUTO INCREMENT
+1. CREATE TABLE ids (
+  id_name varchar,
+  next_id int,
+  PRIMARY KEY (id_name)
+)
+
+2. INSERT INTO ids (id_name, next_id)
+VALUES ('exercicio_id', 1);
+
+3. SELECT next_id FROM ids WHERE id_name = 'person_id'
+
+4. UPDATE ids SET next_id = 2 WHERE id_name = 'person_id' IF next_id = 1
+*/
+
+
+/*CREATE TABLE IF NOT EXISTS alunos_p_email (
+  id uuid,
+	email text,
+	senha text,
+	nome text,
+	endereco text,
+	bairro text,
+	cidade text,
+	estado text,
+	telefone text,
+	pontos int,
+	PRIMARY KEY (email));
+
+CREATE TABLE IF NOT EXISTS alunos_p_nome (
+    id uuid,
+    email text,
+    senha text,
+    nome text,
+    endereco text,
+    bairro text,
+    cidade text,
+    estado text,
+    telefone text,
+    pontos int,
+    PRIMARY KEY (id, nome)) WITH CLUSTERING ORDER BY (nome ASC);
+*/
+/*	CREATE TABLE IF NOT EXISTS operadores_p_email (
+  id uuid,
+	email text,
+	senha text,
+	nome text,
+	telefone text,
+	perfil text,
+	PRIMARY KEY (email));
+
+
+CREATE TABLE IF NOT EXISTS operadores_p_nome (
+  id uuid,
+	email text,
+	senha text,
+	nome text,
+	telefone text,
+	perfil text,
+	PRIMARY KEY (id, nome)) WITH CLUSTERING ORDER BY (nome ASC);
+*/
+/*CREATE TABLE IF NOT EXISTS comentarios_p_exercicio (
+	id bigint,
+	email text,
+	id_exercicio bigint,
+	comentario text,
+	PRIMARY KEY ((id, id_exercicio), email)) WITH CLUSTERING ORDER BY (email ASC);
+*/
+
+
+ /*
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+
+                /*permite a todos os usuários acessarem a pagina /alunos/matricula*/
+                .csrf().disable()
+                .authorizeRequests()
+                .antMatchers(HttpMethod.GET,"/teste")
+//                .antMatchers(HttpMethod.POST,"/alunos/matricula")
+                .permitAll()
+                .and()
+                /*autoriza aos usuarios do tipo GESTOR acessarem /gestor e /novogestor*/
+                .authorizeRequests()
+                .antMatchers("/gestor", "/novogestor").hasRole("GESTOR")
+                .anyRequest().authenticated()
+                .and()
+                /*autoriza aos usuarios do tipo ALUNO acessarem /alunos/atualizar*/
+                .authorizeRequests()
+                .antMatchers("/alunos/atualizar").hasRole("ALUNO")
+                .anyRequest().authenticated()
+                .and()
+                /*permite a todos os usuários acessarem a página de login*/
+                .formLogin()
+                /*localização da pagina de login*/
+                .loginPage("/login")
+                .permitAll();
+
+
+        /*PASSO 4:
+         * configuração do logout:
+         * When using the WebSecurityConfigurerAdapter, logout capabilities are automatically applied. The default is that accessing the URL /logout will log the user out by:
+         * Invalidating the HTTP Session;
+         * Cleaning up any RememberMe authentication that was configured;
+         * Clearing the SecurityContextHolder;
+         * Redirect to /login?logout*/
+        http
+                .logout()
+                .logoutUrl("/logout") /*endereço para realização do logout*/
+                .logoutSuccessUrl("/")/*url a redirecionar caso o logout tenha êxito*/
+                /*.logoutSuccessHandler(logoutSuccessHandler)*/ /*classe a ser executada na operação de logout*/
+                .invalidateHttpSession(true); /*invalida a sessão*/
+        /*.addLogoutHandler(logoutHandler);*/ /*executa o LogoutHandler: realiza uma série de ações*/
+        /*.deleteCookies(cookieNamesToClear)*/ /*remove o cookie especificado no logout*/
+        //                .and();
+
+
+
+
+        /*PASSO 5: Realizar as configurações de login do CLIENTE*/
+    }
+
+    */
+
+
+
+    package br.com.nobreak.cjm.model;
+
+
+    import org.springframework.security.core.GrantedAuthority;
+    import org.springframework.security.core.userdetails.UserDetails;
+
+    import java.util.Collection;
+
+    /*registra os dados do login efetuado*/
+    public class UsuarioAutorizado implements UserDetails {
+
+        private static final long serialVersionUID = 1L;
+
+        private String username;
+        private String password;
+
+        public UsuarioAutorizado(String username, String password) {
+            this.username = username;
+            this.password = password;
+        }
+
+    //    private OAuth2AccessToken token;
+
+        /*public Usuario(Map<String, String> userInfo, OAuth2AccessToken token) {
+            this.userId = userInfo.get("sub");
+            this.username = userInfo.get("email");
+            this.token = token;
+        }*/
+        /*
+        @Override
+        public Collection<? extends GrantedAuthority> getAuthorities() {
+            return Arrays.asList(new SimpleGrantedAuthority("ROLE_USER"));
+        }
+    */
+
+
+
+        @Override
+        public Collection<? extends GrantedAuthority> getAuthorities() {
+            return null;
+        }
+
+        @Override
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        @Override
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+
+        @Override
+        public boolean isAccountNonExpired() {
+            return true;
+        }
+
+        @Override
+        public boolean isAccountNonLocked() {
+            return true;
+        }
+
+        @Override
+        public boolean isCredentialsNonExpired() {
+            return true;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
+
+    }
+
+
+
+
+package br.com.nobreak.cjm.controller;
+
+//@CrossOrigin
+//@Controller
+public class LoginController {
+/*
+    @Autowired
+    LoginService loginService;
+    Gson gson = new Gson();
+
+    @RequestMapping(value="login", method = RequestMethod.POST, produces = "application/json")
+    public @ResponseBody String login(@RequestBody String dadosUsuario) {
+        System.out.println("FAZENDO LOGIN...");
+        String infoUsuario = new String(Base64.getDecoder().decode(dadosUsuario));
+        System.out.println("DADOS DO USUARIO: " + infoUsuario);
+        Usuario usuario = gson.fromJson(infoUsuario, Usuario.class);
+        Object login = loginService.login(usuario);
+        if (login != null) {
+            return Base64.getEncoder().encodeToString(gson.toJson(login, Object.class).getBytes());
+        } else {
+            return null;
+        }
+
+        *//*TODO: caso seja encontrado, retornar detalhes do usuario + token de acesso*//*
+    }*/
+/*
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    @RequestMapping(value = "login", method = RequestMethod.POST, produces = "application/json")
+    public String login(@RequestBody String user) {
+        System.out.println("LOGANDO...");
+        String username = null;
+        try {
+            username = new JSONObject(user).get("userName").toString();
+            logger.info(username);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return "Welcome, " + username;
+
+    }*/
+
+/*
+
+    @RequestMapping(value = "login", method = RequestMethod.POST, produces = "application/json")
+    public Boolean login(@RequestBody Usuario user) {
+        System.out.println("LOGANDO...");
+        return user.getUsername().equals("user") && user.getPassword().equals("password");
+    }
+
+*/
+    /* REQUISIÇÕES APÓS LOGIN REALIZADO: O token deve vir na propriedade Authorization      !!!!!!!!!!
+    @RequestMapping(value="login", method = RequestMethod.POST, produces = "application/json")
+    public Object login(HttpServletRequest request) {
+        System.out.println(request.getHeader("Authorization"));
+            String authToken = request.getHeader("Authorization")
+                    .substring("Basic".length()).trim();
+            Object retorno = new String(Base64.getDecoder().decode(authToken)).split(":")[0];
+        System.out.println(retorno.toString());
+        return retorno;*/
+//            return () -> new String(Base64.getDecoder().decode(authToken)).split(":")[0];
+//    }
+}
+
+
+
+
+package br.com.nobreak.cjm.security;
+
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+//import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+//import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+
+//@EnableWebSecurity
+public class ConfigSegurancaWeb /*extends WebSecurityConfigurerAdapter */{
+
+    /*
+
+     * Require authentication to every URL in your application;
+     * Generate a login form for you;
+     * Allow the user with the Username user and the Password password to authenticate with form based authentication;
+     * Allow the user to logout;
+     * CSRF attack prevention;
+     * Session Fixation protection;
+     * Security Header integration;
+     * HTTP Strict Transport Security for secure requests;
+     * X-Content-Type-Options integration;
+     * Cache Control (can be overridden later by your application to allow caching of your static resources);
+     * X-XSS-Protection integration;
+     * X-Frame-Options integration to help prevent Clickjacking;
+     * Integrate with the following Servlet API methods;
+     * HttpServletRequest#getRemoteUser();
+     * HttpServletRequest.html#getUserPrincipal();
+     * HttpServletRequest.html#isUserInRole(java.lang.String);
+     * HttpServletRequest.html#login(java.lang.String, java.lang.String);
+     * HttpServletRequest.html#logout()
+     * * */
+
+    /*PASSO 2: em CjmApplication*/
+
+    /*
+     * PASSO 3:
+     * configuração do login
+     * */
+
+   /* @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+            .authorizeRequests()
+                .antMatchers("/login", "/alunos/matricula").permitAll()
+                .anyRequest().authenticated().and()
+            .logout()
+                .permitAll().and()
+            .httpBasic().and()
+            .csrf().disable();
+    }*/
+
+}
+
+
+/*
+        query.insert(0, "BEGIN BATCH ");
+        query.append(queryBusca.toString());
+        query.append("APPLY BATCH;");
+        System.out.println("\n");
+        System.out.println(query.toString());
+
+        *//*registro do exercicio na tabela de exercicios*//*
+        StringBuilder query = new StringBuilder("INSERT INTO exercicios (id, enunciado1, imagem_enunciado, enunciado2, opcoes, gabarito_objetivo, gabarito_subjetivo, pontuacao, categoria) VALUES (");
+        query.append(exercicio.getId().toString());
+        query.append(", '");
+        query.append(exercicio.getEnunciado1());
+        query.append("', textAsBlob('");
+        query.append(exercicio.getImagemEnunciado());
+        query.append("'), '");
+        query.append(exercicio.getEnunciado2());
+        query.append("', [");
+        int tOpcoes = exercicio.getOpcoes().size();
+        for (int i = 0; i < tOpcoes; i++) {
+            if (i < tOpcoes-1) {
+                query.append(" '");
+                query.append(exercicio.getOpcoes().get(i));
+                query.append("', ");
+            } else {
+                query.append("'");
+                query.append(exercicio.getOpcoes().get(i));
+                query.append("' ");
+            }
+        }
+        query.append("], ");
+        query.append(exercicio.getGabaritoObjetivo());
+        query.append(", '");
+        query.append(exercicio.getGabaritoSubjetivo());
+        query.append("', ");
+        query.append(exercicio.getPontuacao());
+        query.append(", '");
+
+        StringBuilder stringCategoria = new StringBuilder();
+        Integer tCategoria = exercicio.getCategoria().size();
+        for(int h = 0; h<tCategoria; h++) {
+            if (h < tCategoria-1) {
+                stringCategoria.append(exercicio.getCategoria().get(h));
+                stringCategoria.append(", ");
+            } else {
+                stringCategoria.append(exercicio.getCategoria().get(h));
+                stringCategoria.append("' ");
+            }
+        }
+
+        query.append(stringCategoria.toString());
+        query.append(");");*/
+
+        /*registro do exercicio na tabela de busca de exrecicios*/
+
+GENERICS
+        Object[] objetosCategoria = resultado.getSet("categoria", String.class).toArray();
+        ArrayList<String> categorias = new ArrayList<>();
+        for (Object objeto:objetosCategoria
+        ) {
+            if (objeto instanceof String) {
+                categorias.add(objeto.toString());
+            }
+        }
+        exercicio.setCategoria(categorias);
